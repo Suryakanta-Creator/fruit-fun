@@ -1,8 +1,8 @@
-# Fruitverse — living 3D jungle
+# Fruitverse — cinematic living forest
 
-Next.js with a dynamically loaded Three.js jungle. Native scrolling moves a perspective camera through a real-time 3D forest. Trees sway, instanced leaves bend in the wind, fruit floats and turns, and particles drift. Fruit models include a mango, orange, apple, watermelon, dragon fruit with scales, and durian with instanced spikes.
+A Next.js forest experience that uses photoreal landscape assets rather than simple modeled trees and fruit. Full-screen WebGL image surfaces receive localized foliage sway, gentle fruit movement, water ripples and changing light. Native scrolling drives camera-style push-in, lateral motion, crossfades and an independently moving photographic foreground.
 
-No visible names, descriptions, navigation or facts appear on the forest surface. Hover highlights and lifts a fruit. Click/tap raycasts the mesh and opens a pop-up with its information; keyboard users can activate the current fruit. Escape and the close control dismiss the pop-up. A photographic forest backdrop adds distance behind the geometry.
+The forest surface shows no fruit names or facts. Hover gently highlights the fruit region. Click or tap opens its information; keyboard users can activate the current fruit. Escape and the close control dismiss the pop-up.
 
 ```sh
 npm ci
@@ -10,6 +10,6 @@ npm run dev
 npm run build
 ```
 
-Rendering follows display size and pixel ratio, capped at 3840 × 2160 worth of pixels. A 4K display can render native 4K geometry; phones use a smaller pixel budget, and consistently slow desktop rendering lowers resolution. The photographic backdrop remains 1672 × 941, not native 4K photography. Reduced-motion preferences disable swaying and floating. Rendering pauses when hidden or offscreen, and geometry, materials and textures are disposed on unmount. WebGL-unavailable devices receive an interactive image fallback.
+The renderer supports a 3840 × 2160 pixel budget on 4K displays. Phones use smaller images and a lower pixel ratio; sustained slow desktop rendering reduces resolution. Source landscape images are 1672 × 941 and are generated photoreal imagery, not native 4K photographs or filmed video. This is photo-based depth and localized image animation, not a geometric 3D forest. Reduced-motion preferences disable deformation and drift. Rendering pauses offscreen or in a hidden tab; textures and materials are disposed on unmount. WebGL-unavailable devices receive interactive image fallback.
 
-The existing forest assets were generated using the built-in image-generation tool and the original “Mango in the Enchanted Forest” reference. Mesh shapes, plant animation, bark and floor textures are generated in the renderer. Production builds check TypeScript; browser verification covers desktop/mobile clicks, hidden information and hover behavior.
+The forest assets were generated using the built-in image-generation tool and the original “Mango in the Enchanted Forest” reference. The wind, water and lighting effects are rendered in the shader. Production builds check TypeScript; browser verification covers desktop and mobile interaction, hidden information, hover and the 4K drawing buffer.
