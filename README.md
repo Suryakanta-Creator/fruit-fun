@@ -1,8 +1,8 @@
-# Fruitverse
+# Fruitverse — living 3D jungle
 
-A Next.js forest journey with seven full-viewport photographic scenes. The opening view has no visible navigation, text or buttons. Native scrolling drives camera push-in, lateral drift, independent foreground foliage, light shafts, floating motes, scene crossfades, then captions and staggered understated controls. Fruit details and a searchable index remain available.
+Next.js with a dynamically loaded Three.js jungle. Native scrolling moves a perspective camera through a real-time 3D forest. Trees sway, instanced leaves bend in the wind, fruit floats and turns, and particles drift. Fruit models include a mango, orange, apple, watermelon, dragon fruit with scales, and durian with instanced spikes.
 
-## Run
+No visible names, descriptions, navigation or facts appear on the forest surface. Hover highlights and lifts a fruit. Click/tap raycasts the mesh and opens a pop-up with its information; keyboard users can activate the current fruit. Escape and the close control dismiss the pop-up. A photographic forest backdrop adds distance behind the geometry.
 
 ```sh
 npm ci
@@ -10,8 +10,6 @@ npm run dev
 npm run build
 ```
 
-## Imagery and motion
+Rendering follows display size and pixel ratio, capped at 3840 × 2160 worth of pixels. A 4K display can render native 4K geometry; phones use a smaller pixel budget, and consistently slow desktop rendering lowers resolution. The photographic backdrop remains 1672 × 941, not native 4K photography. Reduced-motion preferences disable swaying and floating. Rendering pauses when hidden or offscreen, and geometry, materials and textures are disposed on unmount. WebGL-unavailable devices receive an interactive image fallback.
 
-Assets in `public/images/*-scene.webp` and `*-mobile.webp` were generated with the built-in image-generation tool using the original “Mango in the Enchanted Forest” reference. Brief: dense emerald rainforest, warm sunbeams, wet natural textures, centered fruit growing on its plant, no interface or typography. Subjects: forest entrance, mango, orange, apple, watermelon on a vine, dragon fruit on a cactus, durian.
-
-Source resolution is 1672 × 941, not native 4K. Portrait WebP crops serve smaller screens. A transparent generated foliage frame moves independently from each landscape to create depth. These are still-image camera animations, not actual 3D geometry or video. Animation runs on demand and respects reduced-motion preferences; touch scrolling stays native. A static production build checks TypeScript.
+The existing forest assets were generated using the built-in image-generation tool and the original “Mango in the Enchanted Forest” reference. Mesh shapes, plant animation, bark and floor textures are generated in the renderer. Production builds check TypeScript; browser verification covers desktop/mobile clicks, hidden information and hover behavior.
