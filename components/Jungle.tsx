@@ -27,8 +27,8 @@ const fragment = `
     float edge = smoothstep(.23, .48, abs(uv.x - .5));
     float canopy = smoothstep(.55, .9, uv.y);
     float breeze = (sin(time * .68 + uv.y * 9.0) + sin(time * 1.12 + uv.x * 13.0) * .35);
-    uv.x += motion * greenery * (edge + canopy * .5) * breeze * .0022;
-    uv.y += motion * greenery * edge * sin(time * .82 + uv.x * 8.0) * .0013;
+    uv.x += motion * greenery * (edge + canopy * .5) * breeze * .0038;
+    uv.y += motion * greenery * edge * sin(time * .82 + uv.x * 8.0) * .0021;
     float fruit = (1.0 - smoothstep(.8, 1.3, length((uv - vec2(.5,.59)) / vec2(.135,.245)))) * isFruit;
     uv.x += fruit * motion * sin(time * .8) * .0016;
     uv.y += fruit * motion * sin(time * 1.15) * .0013;
@@ -39,6 +39,45 @@ const fragment = `
     color *= 1.0 + light;
     color += vec3(.018,.012,.002) * fruit * hover;
     gl_FragColor = vec4(color, opacity);
+    #include <colorspace_fragment>
+  }
+`;
+
+const dewFragment = `
+  uniform sampler2D forest;
+  uniform float time;
+  uniform float aspect;
+  uniform float motion;
+  varying vec2 vUv;
+  float hash(float n) { return fract(sin(n * 127.1 + 31.7) * 43758.5453); }
+  void main() {
+    vec3 color = texture2D(forest, vUv).rgb;
+    for (int i = 0; i < 12; i++) {
+      float id = float(i);
+      float phase = fract(time / (5.5 + hash(id) * 6.0) + hash(id + 6.0));
+      float age = max(0.0, phase - .18) * 3.4;
+      float visibility = smoothstep(.18,.23,phase) * (1.0 - smoothstep(.70,.79,phase)) * motion;
+      float originX = .12 + hash(id + 2.0) * .76;
+      float originY = .67 + hash(id + 3.0) * .29;
+      vec2 center = vec2(originX + sin(age * 1.3 + id) * .002, originY - .075 * age - .21 * age * age);
+      float radius = .0027 + hash(id + 4.0) * .0037;
+      vec2 delta = (vUv - center) * vec2(aspect,1.0) / radius;
+      delta.y /= 1.12 + age * .23;
+      float d = dot(delta,delta);
+      if (d < 1.0 && visibility > .001) {
+        vec3 normal = normalize(vec3(delta,sqrt(max(.001,1.0-d))));
+        vec2 refractedUv = vUv - normal.xy * radius * .7 / vec2(aspect,1.0);
+        vec3 inside = texture2D(forest, clamp(refractedUv,.001,.999)).rgb;
+        float rim = pow(1.0-normal.z,3.0);
+        float glint = pow(max(0.0,dot(normal,normalize(vec3(-.42,.55,.72)))),30.0);
+        inside = inside * (.94 - rim * .16) + vec3(1.0,.94,.79) * (glint * .8 + rim * .08);
+        float edge = 1.0 - smoothstep(.76,1.0,d);
+        color = mix(color,inside,edge * visibility * .84);
+      }
+    }
+    float vignette = 1.0 - smoothstep(.2,.95,length((vUv-.5)*vec2(.85,1.0)));
+    color *= .96 + vignette * .04;
+    gl_FragColor = vec4(color,1.0);
     #include <colorspace_fragment>
   }
 `;
@@ -56,6 +95,10 @@ export default function Jungle({ journey, onSelect, onActive, onReady, onUnavail
     const scene=new THREE.Scene();
     const camera=new THREE.OrthographicCamera(-1,1,1,-1,.1,10);camera.position.z=2;
     const geometry=new THREE.PlaneGeometry(2,2);
+    const targetTexture=new THREE.WebGLRenderTarget(1,1,{depthBuffer:false,stencilBuffer:false});
+    const dewScene=new THREE.Scene();
+    const dewMaterial=new THREE.ShaderMaterial({uniforms:{forest:{value:targetTexture.texture},time:{value:0},aspect:{value:1},motion:{value:1}},vertexShader:"varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",fragmentShader:dewFragment,depthTest:false,depthWrite:false});
+    dewScene.add(new THREE.Mesh(geometry,dewMaterial));
     const loader=new THREE.TextureLoader();
     const textures:THREE.Texture[]=[];
     const surfaces:THREE.Mesh<THREE.PlaneGeometry,THREE.ShaderMaterial>[]=[];
@@ -73,7 +116,7 @@ export default function Jungle({ journey, onSelect, onActive, onReady, onUnavail
     const pointer=new THREE.Vector2(),smoothPointer=new THREE.Vector2();
     const resolution=new THREE.Vector2();
     const photoAspect=phone.matches?800/1200:1672/941;
-    function resize(){const width=element!.clientWidth,height=element!.clientHeight;const aspect=width/height;const dpr=phone.matches?Math.min(devicePixelRatio,1.5):Math.min(devicePixelRatio,2);renderer.setPixelRatio(Math.min(dpr,Math.sqrt(8294400/(width*height)))*quality);renderer.setSize(width,height,false);surfaces.forEach(surface=>{surface.scale.set(aspect<photoAspect?photoAspect/aspect:1,aspect>photoAspect?aspect/photoAspect:1,1);});const foliageAspect=1672/941;foliage.scale.set(Math.max(1,foliageAspect/aspect)*1.055,Math.max(1,aspect/foliageAspect)*1.055,1);renderer.getDrawingBufferSize(resolution);element!.dataset.renderResolution=`${resolution.x}x${resolution.y}`;}
+    function resize(){const width=element!.clientWidth,height=element!.clientHeight;const aspect=width/height;const dpr=phone.matches?Math.min(devicePixelRatio,1.5):Math.min(devicePixelRatio,2);renderer.setPixelRatio(Math.min(dpr,Math.sqrt(8294400/(width*height)))*quality);renderer.setSize(width,height,false);surfaces.forEach(surface=>{surface.scale.set(aspect<photoAspect?photoAspect/aspect:1,aspect>photoAspect?aspect/photoAspect:1,1);});const foliageAspect=1672/941;foliage.scale.set(Math.max(1,foliageAspect/aspect)*1.055,Math.max(1,aspect/foliageAspect)*1.055,1);renderer.getDrawingBufferSize(resolution);targetTexture.setSize(resolution.x,resolution.y);dewMaterial.uniforms.aspect.value=aspect;element!.dataset.renderResolution=`${resolution.x}x${resolution.y}`;}
     function scroll(){target=clamp((window.scrollY-root!.offsetTop)/(root!.offsetHeight-element!.clientHeight)*7,0,6.82);}
     function activeIndex(){return current<.88?null:Math.min(5,Math.max(0,Math.floor(current)-1));}
     function overFruit(){if(activeIndex()===null)return false;return Math.pow(pointer.x/.42,2)+Math.pow((pointer.y-.15)/.6,2)<1;}
@@ -87,8 +130,10 @@ export default function Jungle({ journey, onSelect, onActive, onReady, onUnavail
       const active=activeIndex();if(active!==lastActive){lastActive=active;onActive(active);}
       surfaces.forEach((surface,index)=>{const p=current-index;const fadeIn=index===0?1:THREE.MathUtils.smoothstep(p,-.28,0);const fadeOut=index===6?1:1-THREE.MathUtils.smoothstep(p,.72,1);const alpha=fadeIn*fadeOut;surface.visible=alpha>.001;const u=surface.material.uniforms;u.opacity.value=alpha;u.time.value=time;u.motion.value=reduced.matches?0:1;u.progress.value=reduced.matches?0:clamp(p,-.28,1);u.pointer.value.copy(reduced.matches?new THREE.Vector2():smoothPointer);u.hover.value+=((hover&&active===index-1?1:0)-u.hover.value)*(1-Math.pow(.87,dt*60));});
       foliage.position.set(reduced.matches?0:Math.sin(current*.9)*.018-smoothPointer.x*.008+Math.sin(time*.45)*.003,reduced.matches?0:Math.sin(current*.55)*.018+Math.cos(time*.38)*.003,0);
-      foliage.rotation.z=reduced.matches?0:Math.sin(time*.32)*.002;
-      renderer.render(scene,camera);slowFrames=dt>.036?slowFrames+1:Math.max(0,slowFrames-1);if(!phone.matches&&quality===1&&slowFrames>45){quality=.8;resize();}
+      foliage.rotation.z=reduced.matches?0:Math.sin(time*.32)*.0035;
+      dewMaterial.uniforms.time.value=time;dewMaterial.uniforms.motion.value=reduced.matches?0:1;
+      renderer.setRenderTarget(targetTexture);renderer.render(scene,camera);renderer.setRenderTarget(null);renderer.render(dewScene,camera);
+      slowFrames=dt>.036?slowFrames+1:Math.max(0,slowFrames-1);if(!phone.matches&&quality===1&&slowFrames>45){quality=.8;resize();}
       frame=requestAnimationFrame(render);
     }
     function resume(){if(!frame&&visible&&inView&&!disposed){last=0;frame=requestAnimationFrame(render);}}
@@ -98,7 +143,7 @@ export default function Jungle({ journey, onSelect, onActive, onReady, onUnavail
     const sizes=new ResizeObserver(()=>{resize();scroll();resume();});sizes.observe(element);
     element.addEventListener("pointermove",move,{passive:true});element.addEventListener("pointerdown",down,{passive:true});element.addEventListener("pointerup",up,{passive:true});element.addEventListener("pointerleave",leave);element.addEventListener("webglcontextlost",lost);window.addEventListener("scroll",scroll,{passive:true});window.addEventListener("resize",resize);document.addEventListener("visibilitychange",visibility);
     resize();scroll();current=target;resume();
-    return()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();sizes.disconnect();element.removeEventListener("pointermove",move);element.removeEventListener("pointerdown",down);element.removeEventListener("pointerup",up);element.removeEventListener("pointerleave",leave);element.removeEventListener("webglcontextlost",lost);window.removeEventListener("scroll",scroll);window.removeEventListener("resize",resize);document.removeEventListener("visibilitychange",visibility);geometry.dispose();surfaces.forEach(surface=>surface.material.dispose());foliageMaterial.dispose();textures.forEach(texture=>texture.dispose());renderer.dispose();};
+    return()=>{disposed=true;cancelAnimationFrame(frame);observer.disconnect();sizes.disconnect();element.removeEventListener("pointermove",move);element.removeEventListener("pointerdown",down);element.removeEventListener("pointerup",up);element.removeEventListener("pointerleave",leave);element.removeEventListener("webglcontextlost",lost);window.removeEventListener("scroll",scroll);window.removeEventListener("resize",resize);document.removeEventListener("visibilitychange",visibility);geometry.dispose();surfaces.forEach(surface=>surface.material.dispose());foliageMaterial.dispose();dewMaterial.dispose();targetTexture.dispose();textures.forEach(texture=>texture.dispose());renderer.dispose();};
   },[journey,onSelect,onActive,onReady,onUnavailable]);
   return <canvas className="jungle-canvas" ref={canvas} aria-label="Living forest scenes. Scroll to explore; click or tap a fruit to reveal its information." />;
 }
