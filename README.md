@@ -1,15 +1,24 @@
-# Fruitverse — cinematic living forest
+# Fruitverse — The Sakura Sanctuary
 
-A Next.js forest experience that uses photoreal landscape assets rather than simple modeled trees and fruit. Full-screen WebGL image surfaces receive localized foliage sway, gentle fruit movement, water ripples and changing light. A separate dew pass draws small gravity-driven drops with refraction of the live forest, highlights and a soft rim. Native scrolling drives camera-style push-in, lateral motion, crossfades and an independently moving photographic foreground.
-
-The forest surface shows no fruit names or facts. Hover gently highlights the fruit region. Click or tap opens its information; keyboard users can activate the current fruit. Escape and the close control dismiss the pop-up.
+A cinematic Japanese fairyland with a locally hosted, silent background film: moving cherry blossoms, swaying lanterns, water shimmer, and a slow camera journey through a generated garden. The film is rendered from the garden's Three.js animation. Scroll changes the framing and atmosphere through four chapters; a guided tour moves through them automatically.
 
 ```sh
 npm ci
 npm run dev
-npm run build
 ```
 
-The renderer supports a 3840 × 2160 pixel budget on 4K displays. Phones use smaller images and a lower pixel ratio; sustained slow desktop rendering reduces resolution. Source landscape images are 1672 × 941 and are generated photoreal imagery, not native 4K photographs or filmed video. This is photo-based depth and localized image animation, not a geometric 3D forest. Reduced-motion preferences disable deformation and drift. Rendering pauses offscreen or in a hidden tab; textures and materials are disposed on unmount. WebGL-unavailable devices receive interactive image fallback.
+For production, run `npm run build` then `npm start`. No environment variables, database, external media services, or secrets are required. Node 24.19.0 and npm 11.9.0 were used for validation.
 
-The forest assets were generated using the built-in image-generation tool and the original “Mango in the Enchanted Forest” reference. The wind, water, droplets and lighting effects are rendered in shaders. The dew pass samples the live forest render target, which is resized with the canvas and disposed on unmount. Production builds check TypeScript; browser verification covers desktop and mobile interaction, hidden information, hover and the 4K drawing buffer.
+## Background film
+
+[View the garden film](public/videos/sakura-sanctuary.mp4).
+
+- `public/videos/sakura-sanctuary.mp4`: 1280 × 720 H.264, silent, loopable garden film.
+- `public/videos/sakura-sanctuary-mobile.mp4`: smaller phone version of the same film.
+- `public/images/sakura-sanctuary.webp`: immediate poster and still-image fallback.
+
+Playback uses muted inline video, an overlap at the loop boundary, and fast-start MP4 encoding. Pause stops both the film and mist. Playback suspends while the page is hidden or the scene is offscreen. Reduced-motion preferences show the still garden without downloading a video. Autoplay refusal leaves the poster visible and offers the existing resume control; video failures preserve the usable page and fruit collection.
+
+Select **Begin the journey** for a slow guided tour. Manual scrolling stops the tour. **Discover the fruits** opens the six-fruit collection, with native modal focus containment, Escape dismissal, and previous/next controls. Fullscreen is optional.
+
+The generated garden and earlier fruit photography are bundled locally. The Three.js scene source remains in `components/fairyland/FairyScene.tsx`; the page plays the encoded film so it does not need WebGL. No external font or image request is needed at runtime.

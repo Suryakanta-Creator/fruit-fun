@@ -1,5 +1,5 @@
-import Fruitverse from "@/components/Fruitverse";
+import Fairyland from "@/components/fairyland/Fairyland";
 
 export default function Home() {
-  return <Fruitverse />;
+  return <Fairyland />;
 }
